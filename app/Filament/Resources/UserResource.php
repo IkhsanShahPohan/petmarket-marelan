@@ -5,8 +5,10 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
+use App\Models\Employee;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Components\Repeater;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,7 +19,7 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $label = 'Data-User';
 
     public static function form(Form $form): Form
@@ -35,11 +37,29 @@ class UserResource extends Resource
                 ->revealable(),
                 Forms\Components\Select::make('role')
                 ->options([
+                    'admin' => 'Admin',
                     'kasir' => 'Kasir',
                     'pegawai' => 'Pegawai',
                 ])
                 ->default('pegawai')
+                ->reactive()
                 ->required(),
+                Repeater::make('items') // 'items' adalah input array sementara
+                    ->label('Pegawai')
+                    ->schema([
+                        Forms\Components\TextInput::make('phone')
+                        ->label('Phone')
+                        ->numeric()
+                        ->required(),
+
+                        Forms\Components\DatePicker::make('hire_date')
+                            ->label('Hire Date')
+                            ->native(false)
+                            ->required(),
+
+                    ])
+                    ->visible(fn (callable $get) => $get('role') === 'pegawai')
+                    ->required(),
             ]);
     }
 
@@ -56,7 +76,12 @@ class UserResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                ->label(''),
+                Tables\Actions\DeleteAction::make()
+                ->label(''),
+                Tables\Actions\ViewAction::make()
+                ->label(''),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

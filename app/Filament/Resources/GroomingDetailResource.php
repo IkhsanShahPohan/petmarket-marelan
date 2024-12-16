@@ -17,7 +17,10 @@ class GroomingDetailResource extends Resource
 {
     protected static ?string $model = GroomingDetail::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-bars-3';
+    protected static ?string $navigationGroup = 'Grooming';
+
+    protected static ?string $label = 'Type';
 
     public static function form(Form $form): Form
     {
@@ -58,7 +61,9 @@ class GroomingDetailResource extends Resource
                 Tables\Actions\EditAction::make()
                 ->label(''),
                 Tables\Actions\DeleteAction::make()
-                ->label('')
+                ->label(''),
+                Tables\Actions\ViewAction::make()
+                ->label(''),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -78,8 +83,8 @@ class GroomingDetailResource extends Resource
     {
         return [
             'index' => Pages\ListGroomingDetails::route('/'),
-            'create' => Pages\CreateGroomingDetail::route('/create'),
-            'edit' => Pages\EditGroomingDetail::route('/{record}/edit'),
+            // 'create' => Pages\CreateGroomingDetail::route('/create'),
+            // 'edit' => Pages\EditGroomingDetail::route('/{record}/edit'),
         ];
     }
 }

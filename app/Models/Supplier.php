@@ -11,4 +11,8 @@ class Supplier extends Model
 
     // Secara eksplisit mendefinisikan nama tabel
     protected $table = 'suppliers';
+    public function buying_invoice()
+    {
+        return $this->hasMany(BuyingInvoiceDetail::class);
+    }
 }

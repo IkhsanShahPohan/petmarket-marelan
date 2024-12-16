@@ -11,4 +11,23 @@ class Employee extends Model
 
     // Secara eksplisit mendefinisikan nama tabel
     protected $table = 'employees';
+    protected $fillable = [
+        'user_id',
+        'name',
+        'phone',
+        'hire_date',
+    ];
+    public function attendance()
+    {
+        return $this->belongsTo(Attendance::class);
+    }
+    public function payrolls()
+    {
+        return $this->hasMany(Payroll::class, 'employee_id', 'id');
+    }
+    public function user()
+    {
+    return $this->belongsTo(User::class, 'user_id');
+    }
+
 }

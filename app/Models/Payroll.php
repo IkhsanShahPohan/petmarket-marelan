@@ -11,4 +11,8 @@ class Payroll extends Model
 
     // Secara eksplisit mendefinisikan nama tabel
     protected $table = 'payrolls';
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id', 'id');
+    }
 }
