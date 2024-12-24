@@ -6,6 +6,8 @@ use App\Models\SellingInvoiceDetail;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf; // Pastikan package DomPDF sudah terinstal
 use Illuminate\Http\Request;
+use App\Models\Attendance;
+use App\Models\Employee;
 
 class PDFController extends Controller
 {
@@ -78,6 +80,74 @@ public function generateReport($type, $period)
     ]);
 
     return $pdf->download("laporan-invoice-{$type}-{$period}.pdf");
+}
+
+public function attendanceReport($employee, $period, $status = 'all')
+{
+    $query = Attendance::query()
+        ->with('employee') // Eager load employee relation
+        ->whereYear('created_at', substr($period, 0, 4))
+        ->whereMonth('created_at', substr($period, 5, 2));
+
+    // Jika employee tidak 'all', tambahkan filter berdasarkan employee_id
+    if ($employee !== 'all') {
+        $query->where('employee_id', $employee);
+        $employeeData = Employee::find($employee);
+        $title = "Laporan Absensi " . $employeeData->user->name;
+    } else {
+        $title = "Laporan Absensi Semua Karyawan";
+    }
+
+    // Jika status tidak 'all', tambahkan filter berdasarkan status
+    if ($status !== 'all') {
+        $query->where('request_status', $status);
+    }
+
+    // Ambil data absensi berdasarkan query
+    $attendances = $query->orderBy('created_at')->get();
+
+    // Hitung statistik
+    $stats = [
+        'total_present' => $attendances->where('status', 'present')->count(),
+        'total_absent' => $attendances->where('status', 'absent')->count(),
+        'total_late' => $attendances->where('status', 'late')->count(),
+        'attendance_rate' => $attendances->count() > 0
+            ? round(($attendances->where('status', 'present')->count() / $attendances->count()) * 100, 2)
+            : 0,
+        'total_employees' => $employee === 'all'
+            ? $attendances->pluck('employee_id')->unique()->count()
+            : 1
+    ];
+
+    // Kelompokkan absensi berdasarkan employee_id jika employee adalah 'all'
+    $groupedAttendances = $employee === 'all'
+        ? $attendances->groupBy('employee_id')
+        : collect([$employee => $attendances]);
+
+    // Persiapkan data untuk view PDF
+    $attendanceDetails = $attendances->map(function ($attendance) {
+        return [
+            'employee_id' => $attendance->employee_id,
+            'status' => $attendance->status,
+            'type' => $attendance->type, // Menambahkan type di sini
+            'request_status' => $attendance->request_status, // Menambahkan request_status di sini
+            'notes' => $attendance->notes,
+            'image' => $attendance->image,
+            'created_at' => $attendance->created_at->format('d-m-Y H:i:s'),
+        ];
+    });
+
+    // Generate PDF
+    $pdf = Pdf::loadView('attendance.report-pdf', [
+        'title' => $title,
+        'period' => Carbon::parse($period . '-01')->format('F Y'),
+        'stats' => $stats,
+        'groupedAttendances' => $groupedAttendances,
+        'attendanceDetails' => $attendanceDetails, // Mengirimkan detail absensi, termasuk type dan request_status
+        'isAllEmployees' => $employee === 'all'
+    ]);
+
+    return $pdf->download("laporan-absensi-{$period}.pdf");
 }
 
 

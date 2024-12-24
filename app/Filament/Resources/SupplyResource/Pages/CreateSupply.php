@@ -11,6 +11,10 @@ class CreateSupply extends CreateRecord
 {
     protected static string $resource = SupplyResource::class;
 
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
     // Hapus 'items' dari form sebelum menyimpan ke database utama
     protected function mutateFormDataBeforeCreate(array $data): array
     {
@@ -35,11 +39,11 @@ class CreateSupply extends CreateRecord
     }
 
     // Hitung total_price dari stored function berdasarkan invoice_id yang benar
-    $totalPrice = DB::selectOne('SELECT calculate_total_price_buying(?) AS total', [$this->record->id])->total;
+    // $totalPrice = DB::selectOne('SELECT calculate_total_price_buying(?) AS total', [$this->record->id])->total;
 
-    // Update total_price di record utama
-    $this->record->update([
-        'total_price' => $totalPrice,
-    ]);
+    // // Update total_price di record utama
+    // $this->record->update([
+    //     'total_price' => $totalPrice,
+    // ]);
     }
 }

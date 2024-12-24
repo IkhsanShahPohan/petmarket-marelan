@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CategoryResource\Pages;
 use App\Models\Category;
+use App\Models\CategoryView;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -35,14 +36,15 @@ class CategoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->query(CategoryView::query())
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
                 Tables\Columns\ImageColumn::make('image'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
+                    // ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
@@ -74,7 +76,9 @@ class CategoryResource extends Resource
                         ->label('Name'),
                     ImageEntry::make('image')
                         ->label('Image'),
-                ]),
+                ])
+                ->description('Informasi tentang kategori')
+                    ->collapsed(false),
 
             // Section: Timestamps
             Section::make('Timestamps')
@@ -85,7 +89,9 @@ class CategoryResource extends Resource
                     TextEntry::make('updated_at')
                         ->label('Updated At')
                         ->dateTime(),
-                ]),
+                ])
+                ->description('Informasi tentang waktu terbuat dan terupdate.')
+                    ->collapsed(false),
         ]);
 }
 

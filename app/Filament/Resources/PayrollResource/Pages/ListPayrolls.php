@@ -9,12 +9,17 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class ListPayrolls extends ListRecords
-{
+{ 
     protected static string $resource = PayrollResource::class;
-
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\CreateAction::make(),
+        ];
+    }
     protected function getTableQuery(): Builder
     {
-        $query = parent::getTableQuery();
+        $query = parent::getTableQuery(); 
 
         // Periksa apakah pengguna sudah login dan memiliki relasi 'employee'
         if (Auth::check() && Auth::user()->employee) {

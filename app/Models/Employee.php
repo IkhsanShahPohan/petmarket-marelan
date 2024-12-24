@@ -17,9 +17,9 @@ class Employee extends Model
         'phone',
         'hire_date',
     ];
-    public function attendance()
+    public function attendances()
     {
-        return $this->belongsTo(Attendance::class);
+        return $this->hasMany(Attendance::class);
     }
     public function payrolls()
     {

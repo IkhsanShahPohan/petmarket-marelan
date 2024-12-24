@@ -7,13 +7,19 @@ use App\Filament\Resources\SupplyResource\RelationManagers;
 use App\Models\BuyingInvoice;
 use App\Models\BuyingInvoiceDetail;
 use Filament\Forms;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Forms\Form;
 use Filament\Forms\Components\Repeater;
+use Illuminate\Support\Facades\DB;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Infolists\Infolist;
+use Illuminate\Support\Facades\Auth;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\Section;
 
 class SupplyResource extends Resource
 {
@@ -23,16 +29,20 @@ class SupplyResource extends Resource
     protected static ?string $navigationGroup = 'Product';
 
     protected static ?string $label = 'Supply';
-
+    public static function shouldRegisterNavigation(): bool
+    {
+        // Only show the page for users with the 'kasir' role
+        return auth()->user()->role === 'admin';
+    }
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                     Forms\Components\TextInput::make('invoice_code')
                         ->label('Invoice Code')
-                        ->required(),
-                       // ->default('BINV' . now()->format('YmdHis') . rand(100, 999)) // Kombinasi timestamp + angka acak
-                        //->disabled(), // Tidak bisa diedit manual oleh user
+                        ->required()
+                       ->default('BINV' . now()->format('YmdHis')),// Kombinasi timestamp + angka acak
+                        // ->disabled(), // Tidak bisa diedit manual oleh user
                     Forms\Components\Select::make('supplier_id')
                         ->label('Supplier')
                         ->relationship('supplier', 'name')
@@ -75,6 +85,9 @@ class SupplyResource extends Resource
                         ])
                         ->default('Paid')
                         ->required(),
+                    Forms\Components\FileUpload::make('image')
+                        ->image()
+                        ->label('Image'),
 
                 // Schema untuk tabel kedua (detail item invoice)
                 Repeater::make('items') // 'items' adalah input array sementara
@@ -96,8 +109,74 @@ class SupplyResource extends Resource
                             ->numeric()
                             ->required(),
                     ])
+                    // ->hidden(fn () => !auth()->user()->can('manageDetails', BuyingInvoice::class))
                     ->createItemButtonLabel('Add Item')
-                    ->required(),
+                    ->required(fn ($context) => $context === 'create')
+                    ->disabled(fn ($context) => $context === 'edit'),
+            ]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Section::make('Invoice Information')
+                    ->schema([
+                        TextEntry::make('id')
+                            ->label('Invoice ID'),
+                        TextEntry::make('supplier.name')
+                            ->label('Supplier_id'),
+                        TextEntry::make('invoice_code')
+                            ->label('invoice_code'),
+                        TextEntry::make('status')
+                            ->label('Status'),
+                        ImageEntry::make('image')
+                            ->label('Invoice Image')
+                            ->size(150) // Ukuran gambar
+                            ->circular(), // Bentuk lingkaran
+                        TextEntry::make('created_at')
+                            ->label('Tanggal Dibuat')
+                            ->formatStateUsing(fn ($state) => \Carbon\Carbon::parse($state)->format('d M Y, H:i')),
+                    ])
+                        ->description('Informasi utama tentang invoice.')
+                        ->collapsed(false),
+                Section::make('Invoice Details')
+                    ->schema([
+                        TextEntry::make('id')
+                            ->label('')
+                            ->formatStateUsing(function ($record) {
+                                // Panggil stored procedure untuk mendapatkan detail invoice
+                                $invoiceId = $record->id;
+                                $invoiceDetails = DB::select('CALL GetBuyingInvoiceDetails(?)', [$invoiceId]);
+
+                                // Variabel untuk menyusun hasil
+                                $details = '';
+
+                                // Iterasi melalui hasil prosedur
+                                foreach ($invoiceDetails as $detail) {
+                                    $formattedPrice = number_format($detail->product_price, 0, ',', '.');
+                                    $details .= "Invoice Code: {$detail->invoice_code}\n";
+                                    $details .= "Supplier: {$detail->supplier_name} ({$detail->supplier_email})\n";
+                                    $details .= "Product: {$detail->product_name} (Price: Rp {$formattedPrice}, Quantity: {$detail->product_quantity})\n";
+                                    $details .= "Status: {$detail->status}\n";
+                                    $details .= "-----------------------------\n";
+                                }
+
+                                // Panggil fungsi untuk menghitung total belanjaan
+                                $totalBelanjaan = DB::selectOne('SELECT calculate_buying_invoice_total(?) AS total', [$invoiceId]);
+                                $formattedTotal = number_format($totalBelanjaan->total, 0, ',', '.');
+
+                                // Tambahkan total belanjaan ke dalam tampilan
+                                $details .= "Total Belanjaan: Rp {$formattedTotal}\n";
+
+                                return $details; // Mengganti newline agar tampil di HTML
+                            }),
+                            ])
+                            ->description('Detail produk pada invoice.')
+                            ->collapsed(false)
+                            ->extraAttributes([
+                                'style' => 'white-space: pre-line; line-height: 0;', // Atur jarak antar baris
+                            ]),
             ]);
     }
 
@@ -113,8 +192,8 @@ class SupplyResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\DeleteAction::make()
-                ->label(''),
+                // Tables\Actions\DeleteAction::make()
+                // ->label(''),
                 Tables\Actions\ViewAction::make()
                 ->label(''),
             ])
@@ -136,8 +215,8 @@ class SupplyResource extends Resource
     {
         return [
             'index' => Pages\ListSupplies::route('/'),
-            // 'create' => Pages\CreateSupply::route('/create'),
-            // 'edit' => Pages\EditSupply::route('/{record}/edit'),
+            'create' => Pages\CreateSupply::route('/create'),
+            'edit' => Pages\EditSupply::route('/{record}/edit'),
         ];
     }
 }

@@ -13,7 +13,11 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Infolists\Infolist;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\Section;
 
 class PayrollResource extends Resource
 {
@@ -35,7 +39,7 @@ class PayrollResource extends Resource
                     ->required(),
                 Forms\Components\DatePicker::make('month')
                     ->label('Month')
-                    ->format('Y-m')
+                    ->native(false)
                     ->required(),
                 Forms\Components\Hidden::make('base_salary'),
                     // ->required(),
@@ -51,6 +55,36 @@ class PayrollResource extends Resource
                 Forms\Components\TextInput::make('deductions')
                     ->numeric()
                     ->default(0.00),
+            ]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Section::make('Payroll Information')
+                    ->schema([
+                        TextEntry::make('id')
+                            ->label('Payroll ID'),
+                        TextEntry::make('employee.user.name')
+                            ->label('Employee Name'),
+                        TextEntry::make('base_salary')
+                            ->label('Base Salary'),
+                        TextEntry::make('food_salary')
+                            ->label('Food Salary'),
+                        TextEntry::make('transport_salary')
+                            ->label('Transport Salary'),
+                        TextEntry::make('bonus')
+                            ->label('Bonus'),
+                        TextEntry::make('deductions')
+                            ->label('Deduction'),
+                        TextEntry::make('created_at')
+                            ->label('Tanggal Dibuat')
+                            ->formatStateUsing(fn ($state) => \Carbon\Carbon::parse($state)->format('d M Y, H:i')),
+                    ])
+                        ->description('Informasi utama tentang penggajian.')
+                        ->collapsed(false),
+
             ]);
     }
 
@@ -94,8 +128,8 @@ class PayrollResource extends Resource
                 //
             ])
             ->actions([
-                // Tables\Actions\EditAction::make()
-                // ->label(''),
+                Tables\Actions\EditAction::make()
+                ->label(''),
                 Tables\Actions\DeleteAction::make()
                 ->label(''),
                 Tables\Actions\ViewAction::make()
@@ -119,7 +153,7 @@ class PayrollResource extends Resource
     {
         return [
             'index' => Pages\ListPayrolls::route('/'),
-            // 'create' => Pages\CreatePayroll::route('/create'),
+            'create' => Pages\CreatePayroll::route('/create'),
             // 'edit' => Pages\EditPayroll::route('/{record}/edit'),
         ];
     }

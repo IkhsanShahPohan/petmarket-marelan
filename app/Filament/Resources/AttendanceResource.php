@@ -48,9 +48,9 @@ class AttendanceResource extends Resource
                     ->maxLength(255)
                     ->default(null),
                 Forms\Components\FileUpload::make('image')
-                    ->required()
+                    // ->required()
                     ->image(),
-                    Forms\Components\Radio::make('type')
+                Forms\Components\Radio::make('type')
                     ->label('Waktu Kehadiran')
                     ->options([
                         'datang' => 'Datang',
@@ -58,25 +58,61 @@ class AttendanceResource extends Resource
                     ])
                     ->visible(fn (callable $get) => $get('status') === 'present')
                     ->required(),
+
+                Forms\Components\Select::make('request_status')
+                    ->label('Request Status')
+                    ->options([
+                        'menunggu' => 'Menunguu',
+                        'diterima' => 'Diterima',
+                        'ditolak' => 'Ditolak',
+                    ])
+                    // ->reactive()
+                    ->visible(fn () => Auth::user()->isAdmin())
+                    ->disabled(fn () => !Auth::user()->isAdmin())
+                    //->mapWithKeys(fn($value) => [$value => $value])) // Mengatur enum menjadi key-value
+                    ->required(),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            // ->query(
+            //     fn (Builder $query) => $query->when(auth()->user()->employee, function ($query) {
+            //         $query->where('employee_id', auth()->user()->employee ? auth()->user()->employee->id : null);
+            //     })
+            // )
+
             ->columns([
-                Tables\Columns\TextColumn::make('employee_id')
+                Tables\Columns\TextColumn::make('employee.user.name')
+                    ->label('Employee Name')
                     ->numeric()
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('type'),
                 Tables\Columns\TextColumn::make('status'),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable(),
+                    // ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('notes')
                     ->searchable(),
                 Tables\Columns\ImageColumn::make('image'),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+
+                // // Menampilkan status dalam bentuk teks untuk pegawai
+                // Tables\Columns\TextColumn::make('request_status')
+                //     ->inline()
+                //     ->visible(fn () => Auth::user()->isEmployee()) // Hanya visible untuk pegawai
+                //     ->searchable(),
+
+                // Dropdown untuk Admin
+                Tables\Columns\SelectColumn::make('request_status')
+                    ->options(\App\Models\Attendance::getStatusOptions()) // Memuat enum dari model
+                    ->inline()
+                    // ->visible(fn () => Auth::user()->isAdmin()) // Hanya visible untuk admin
+                    ->disabled(fn () => !Auth::user()->isAdmin()) // Menonaktifkan untuk non-admin
+                    ->searchable(),
+
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
@@ -95,6 +131,18 @@ class AttendanceResource extends Resource
                 Tables\Filters\Filter::make('This Year')
                     ->query(fn (Builder $query) => $query->whereYear('created_at', now()->year))
                     ->label('Tahun ini'),
+
+                Tables\Filters\Filter::make('Approved')
+                    ->query(fn (Builder $query) => $query->where('request_status', 'diterima'))
+                    ->label('Diterima'),
+
+                Tables\Filters\Filter::make('Pending')
+                    ->query(fn (Builder $query) => $query->where('request_status', 'menunggu'))
+                    ->label('Menunggu'),
+
+                Tables\Filters\Filter::make('Rejected')
+                    ->query(fn (Builder $query) => $query->where('request_status', 'ditolak'))
+                    ->label('Ditolak'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()

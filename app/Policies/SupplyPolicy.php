@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\BuyingInvoice;
+use App\Models\BuyingInvoiceDetail;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
@@ -13,15 +14,15 @@ class SupplyPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role == 'admin' ;
-    }
+        return false;
+    } 
 
     /**
      * Determine whether the user can view the model.
      */
     public function view(User $user, BuyingInvoice $buyingInvoice): bool
     {
-        return $user->role == 'admin' ;    
+        return false;
     }
 
     /**
@@ -29,7 +30,7 @@ class SupplyPolicy
      */
     public function create(User $user): bool
     {
-        return $user->role == 'admin' ;
+        return false;
     }
 
     /**
@@ -37,7 +38,7 @@ class SupplyPolicy
      */
     public function update(User $user, BuyingInvoice $buyingInvoice): bool
     {
-        return $user->role == 'admin' ;
+        return false;
     }
 
     /**
@@ -45,7 +46,7 @@ class SupplyPolicy
      */
     public function delete(User $user, BuyingInvoice $buyingInvoice): bool
     {
-        return $user->role == 'admin' ;
+        return false;
     }
 
     /**
@@ -53,7 +54,7 @@ class SupplyPolicy
      */
     public function restore(User $user, BuyingInvoice $buyingInvoice): bool
     {
-        return true;
+        return false;
     }
 
     /**
@@ -61,6 +62,6 @@ class SupplyPolicy
      */
     public function forceDelete(User $user, BuyingInvoice $buyingInvoice): bool
     {
-        return true;
+        return false;
     }
 }

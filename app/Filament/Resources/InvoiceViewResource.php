@@ -40,54 +40,53 @@ class InvoiceViewResource extends Resource
     }
 
     public static function infolist(Infolist $infolist): Infolist
-{
-    return $infolist
-        ->schema([
-            Section::make('Invoice Information')
-                ->schema([
-                    TextEntry::make('id')
-                        ->label('Invoice ID'),
-                    TextEntry::make('status')
-                        ->label('Status'),
-                    TextEntry::make('notes')
-                        ->label('Catatan'),
-                    TextEntry::make('invoice_date')
-                        ->label('Tanggal Dibuat')
-                        ->formatStateUsing(fn ($state) => \Carbon\Carbon::parse($state)->format('d M Y, H:i')),
-                ])
-                ->description('Informasi utama tentang invoice.')
-                ->collapsed(false),
-
+    {
+        return $infolist
+            ->schema([
+                Section::make('Invoice Information')
+                    ->schema([
+                        TextEntry::make('id')
+                            ->label('Invoice ID'),
+                        TextEntry::make('status')
+                            ->label('Status'),
+                        TextEntry::make('notes')
+                            ->label('Catatan'),
+                        TextEntry::make('invoice_date')
+                            ->label('Tanggal Dibuat')
+                            ->formatStateUsing(fn ($state) => \Carbon\Carbon::parse($state)->format('d M Y, H:i')),
+                    ])
+                        ->description('Informasi utama tentang invoice.')
+                        ->collapsed(false),
                 Section::make('Invoice Details')
-    ->schema([
-        TextEntry::make('id')
-            ->label('')
-            ->formatStateUsing(function ($record) {
-                $invoiceId = $record->id;
-                $invoiceDetails = DB::select('CALL GetInvoiceDetails(?)', [$invoiceId]);
+                    ->schema([
+                        TextEntry::make('id')
+                            ->label('')
+                            ->formatStateUsing(function ($record) {
+                                $invoiceId = $record->id;
+                                $invoiceDetails = DB::select('CALL GetInvoiceDetails(?)', [$invoiceId]);
 
-                $details = '';
-                foreach ($invoiceDetails as $detail) {
-                    $formattedPrice = number_format($detail->product_price, 0, ',', '.');
-                    $details .= "{$detail->product_name} (Rp {$formattedPrice}, Quantity: {$detail->product_quantity})\n";
-                }
+                                $details = '';
+                                foreach ($invoiceDetails as $detail) {
+                                    $formattedPrice = number_format($detail->product_price, 0, ',', '.');
+                                    $details .= "{$detail->product_name} (Rp {$formattedPrice}, Quantity: {$detail->product_quantity})\n";
+                                }
 
-                // Menghitung total belanjaan menggunakan fungsi yang sudah dibuat di database
-                $totalBelanjaan = DB::select('SELECT calculate_invoice_total(?) AS total', [$invoiceId]);
+                                // Menghitung total belanjaan menggunakan fungsi yang sudah dibuat di database
+                                $totalBelanjaan = DB::select('SELECT calculate_invoice_total(?) AS total', [$invoiceId]);
 
-                // Menambahkan total belanjaan di akhir detail produk
-                $details .= "============================= +\nTotal Belanjaan: Rp " . number_format($totalBelanjaan[0]->total, 0, ',', '.');
+                                // Menambahkan total belanjaan di akhir detail produk
+                                $details .= "============================= +\nTotal Belanjaan: Rp " . number_format($totalBelanjaan[0]->total, 0, ',', '.');
 
-                return $details ?: 'Tidak ada detail produk untuk invoice ini.';
-            }),
-    ])
-    ->description('Detail produk pada invoice.')
-    ->collapsed(false)
-    ->extraAttributes([
-        'style' => 'white-space: pre-line; line-height: 0;', // Atur jarak antar baris
-    ]),
-        ]);
-}
+                                return $details ?: 'Tidak ada detail produk untuk invoice ini.';
+                            }),
+                    ])
+                            ->description('Detail produk pada invoice.')
+                            ->collapsed(false)
+                            ->extraAttributes([
+                                'style' => 'white-space: pre-line; line-height: 0;', // Atur jarak antar baris
+                        ]),
+            ]);
+    }   
 
 
 
@@ -101,15 +100,15 @@ class InvoiceViewResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status'),
                 Tables\Columns\TextColumn::make('total')
-    ->numeric()
-    ->sortable()
-    ->getStateUsing(function ($record) {
-        // Mengambil nilai total
-        $total = $record->total;
+                ->numeric()
+                ->sortable()
+                ->getStateUsing(function ($record) {
+                    // Mengambil nilai total
+                    $total = $record->total;
 
-        // Format menjadi format rupiah
-        return 'Rp ' . number_format($total, 0, ',', '.');
-    }),
+                    // Format menjadi format rupiah
+                    return 'Rp ' . number_format($total, 0, ',', '.');
+                }),
                 Tables\Columns\TextColumn::make('invoice_date')
                     ->dateTime()
                     ->sortable(),

@@ -51,5 +51,16 @@ class User extends Authenticatable
     {
     return $this->hasOne(Employee::class, 'user_id');
     }
-
+    public function isAdmin()
+    {
+        // Sesuaikan dengan kolom atau logika role di tabel users Anda
+        // Misalnya jika Anda menggunakan kolom 'role' untuk menandai user
+        return $this->role === 'admin';
+    }
+    public function isEmployee()
+    {
+        // Sesuaikan dengan kolom atau logika role di tabel users Anda
+        // Misalnya jika Anda menggunakan kolom 'role' untuk menandai user
+        return $this->role === 'pegawai';
+    }
 }

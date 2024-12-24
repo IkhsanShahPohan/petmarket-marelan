@@ -16,7 +16,7 @@ class CreatePayroll extends CreateRecord
     \Log::info('Month:', ['month' => $data['month']]);
 
     // Debugging untuk memastikan employee_id dan month dikirim dengan benar
-    \Log::info('Payroll Data:', $data);
+    \Log::info('Payroll Data:', $data); 
 
     // Tambahkan '-01' agar format menjadi YYYY-MM-DD
     $data['month'] = $data['month'] . '-01';

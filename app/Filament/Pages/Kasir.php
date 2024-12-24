@@ -5,6 +5,7 @@ use App\Models\Product;
 use App\Models\Category;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\DB;  // Pastikan DB sudah di-import
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;  // Jangan lupa untuk menambahkan import Request
 
 class Kasir extends Page
@@ -17,12 +18,22 @@ class Kasir extends Page
     public $products;
     public $categories;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        // Only show the page for users with the 'kasir' role
+        return auth()->user()->role === 'kasir';
+    }
+
     // Method untuk mengambil data dan mengirimkannya ke view
     public function mount()
     {
         // Mengambil data produk dan kategori
         $this->products = Product::with('category')->get();
         $this->categories = Category::all();
+        if (Auth::user()->role !== 'kasir') {
+            abort(403, 'You are not authorized to access this page.');
+        }
+
     }
 
     public function checkout(Request $request)

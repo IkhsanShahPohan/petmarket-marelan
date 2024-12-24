@@ -31,7 +31,7 @@ class Grooming extends Model
     {
         return $this->belongsTo(Customer::class);
     }
-    public function grooming_detail()
+    public function grooming_detail() 
     {
         return $this->belongsTo(GroomingDetail::class);
     }

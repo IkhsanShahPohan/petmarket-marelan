@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Policies;
 
 use App\Models\Payroll;
@@ -13,7 +14,7 @@ class PayrollPolicy
     public function viewAny(User $user): bool
     {
         // Admin dapat melihat semua data
-        return true;
+        return $user->isAdmin() || isset($user->employee);
     }
 
     /**
@@ -29,7 +30,7 @@ class PayrollPolicy
             // Pastikan relasi employee ada dan valid
         if ($user->employee && $payroll->employee_id == $user->employee->id) {
             return true;
-        }
+        } 
 
         // Jika tidak, pegawai tidak bisa melihat payroll selain miliknya
         return false;
@@ -41,7 +42,7 @@ class PayrollPolicy
     public function create(User $user): bool
     {
         // Admin dan pegawai dapat membuat data payroll
-        return true;
+        return $user->role == 'admin'; 
     }
 
     /**
@@ -50,7 +51,7 @@ class PayrollPolicy
     public function update(User $user, Payroll $payroll): bool
     {
         // Hanya admin yang dapat memperbarui payroll
-        return true;
+        return $user->role == 'admin';
     }
 
     /**
@@ -59,7 +60,7 @@ class PayrollPolicy
     public function delete(User $user, Payroll $payroll): bool
     {
         // Hanya admin yang dapat menghapus payroll
-        return true;
+        return $user->role == 'admin';
     }
 
     /**

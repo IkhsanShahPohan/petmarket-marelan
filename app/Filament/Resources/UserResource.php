@@ -5,15 +5,19 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
+use App\Models\UserView;
 use App\Models\Employee;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Components\Repeater;
 use Filament\Resources\Resource;
+use Filament\Infolists\Infolist;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Infolists\Components\Section;
 
 class UserResource extends Resource
 {
@@ -57,20 +61,71 @@ class UserResource extends Resource
                             ->native(false)
                             ->required(),
 
+                        Forms\Components\Select::make('status')
+                            ->label('Employees Status')
+                            ->options([
+                                'permanent' => 'Permanent',
+                                'training' => 'Training',
+                            ])
+                            ->required(),
+
+                        Forms\Components\Select::make('shift')
+                            ->label('Employees Shift')
+                            ->options([
+                                'pagi' => 'Pagi',
+                                'malam' => 'Malam',
+                            ])
+                            ->required(),
+
                     ])
                     ->visible(fn (callable $get) => $get('role') === 'pegawai')
                     ->required(),
             ]);
     }
 
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                // Section: Basic Information
+                Section::make('User Info')
+                    ->schema([
+                        TextEntry::make('name')
+                            ->label('Name'),
+                        TextEntry::make('email')
+                            ->label('Email'),
+                        TextEntry::make('role')
+                            ->label('Role'),
+                    ])
+                ->description('Informasi tentang user.')
+                ->collapsed(false),
+
+                // Section: Timestamps
+                Section::make('Timestamps')
+                    ->schema([
+                        TextEntry::make('created_at')
+                            ->label('Created At')
+                            ->dateTime(),
+                        TextEntry::make('updated_at')
+                            ->label('Updated At')
+                            ->dateTime(),
+                    ])
+                    ->description('Informasi tentang waktu terbuat dan terupdate.')
+                    ->collapsed(false),
+            ]);
+    }
+
+
     public static function table(Table $table): Table
     {
         return $table
+        ->query(UserView::query())
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable(),
                 Tables\Columns\TextColumn::make('email')->searchable(),
                 Tables\Columns\TextColumn::make('role')->searchable(),
                 Tables\Columns\TextColumn::make('created_at')->searchable(),
+                Tables\Columns\TextColumn::make('updated_at')->searchable(),
             ])
             ->filters([
                 //
@@ -87,8 +142,12 @@ class UserResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
+
+
+
 
     public static function getRelations(): array
     {

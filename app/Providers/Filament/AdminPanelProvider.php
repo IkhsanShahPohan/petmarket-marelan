@@ -62,7 +62,7 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
                 // Komentasi middleware class dibawah untuk menjalankan management user
-                // UpdateDatabaseCredentials::class,
+                UpdateDatabaseCredentials::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

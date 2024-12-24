@@ -30,10 +30,16 @@
                                 <p class="product-price">Rp {{ number_format($product->sell_price, 0, ',', '.') }}</p>
                                 <p class="product-stock">Stock: {{ $product->stock }}</p>
                             </div>
-                            <button class="add-to-cart"
-                                onclick="addToCart('{{ $product->id }}', '{{ $product->name }}', {{ $product->sell_price }}, '{{ $product->category->name }}')">
-                                <i class="cart-icon">+</i> Add to Cart
-                            </button>
+                            <div class="counter">
+                                <button class="add-to-cart"
+                                    onclick="addToCart('{{ $product->id }}', '{{ $product->name }}', {{ $product->sell_price }}, '{{ $product->category->name }}')">
+                                    <i class="cart-icon">+ Add</i>
+                                </button>
+                                <button class="add-to-cart"
+                                    onclick="removeToCart('{{ $product->id }}', '{{ $product->name }}', {{ $product->sell_price }}, '{{ $product->category->name }}')">
+                                    <i class="cart-icon">- Remove</i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 @endforeach
@@ -160,6 +166,11 @@
             color: #718096;
         }
 
+        .counter {
+            display: flex;
+
+        }
+
         .add-to-cart {
             width: 100%;
             padding: 10px;
@@ -211,8 +222,6 @@
             padding: 0;
             margin: 0;
         }
-
-
 
         .cart-item {
             display: grid;
@@ -428,6 +437,33 @@
                     category: productCategory,
                     quantity: 1
                 });
+            }
+
+            // Show cart preview section
+            const cartPreview = document.getElementById('cart-preview');
+            const cartTotalItems = document.getElementById('cart-total-items');
+            const cartTotalPrice = document.getElementById('cart-total-price');
+            const totalPrice = cart.reduce((total, item) => {
+                return total + (item.price * item.quantity);
+            }, 0);
+            cartTotalItems.textContent = `${cart.length} items`;
+            cartTotalPrice.textContent = `Rp. ${totalPrice.toLocaleString()}`;
+            cartPreview.style.display = 'block';
+
+            const jsonCart = JSON.stringify(cart, null, 2); // Mengonversi array cart ke string JSON yang indah
+            console.log(jsonCart);
+            // Update the cart preview with added products
+            updateCartPreview();
+        }
+
+        function removeToCart(productId, productName, productPrice, productCategory) {
+            const existingProduct = cart.find(item => item.id === productId);
+
+            if(existingProduct.quantity <= 0 ){
+                return;
+            }
+            else if (existingProduct) {
+                existingProduct.quantity -= 1; // Increase quantity if product already in cart
             }
 
             // Show cart preview section
